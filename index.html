@@ -2,126 +2,83 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Task Tracker</title>
-  <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    input, button, select { padding: 8px; margin: 5px 0; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
-    th { background-color: #f2f2f2; }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Task Manager</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <h2>Task Tracker</h2>
+  <div class="container">
+    <h1>Task Manager</h1>
 
-  <!-- Add Task Form -->
-  <form id="taskForm">
-    <label>
-      Task:
-      <input type="text" id="taskName" required />
-    </label>
-    <label>
-      Time of Completion (HH:MM):
-      <input type="time" id="taskTime" required />
-    </label>
-    <label>
-      Status:
-      <select id="taskStatus" required>
-        <option value="ongoing">Ongoing</option>
-        <option value="completed">Completed</option>
-      </select>
-    </label>
-    <button type="submit">Add Task</button>
-  </form>
+    <section class="card">
+      <form id="taskForm" class="form">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="task">Task</label>
+            <input type="text" id="task" name="task" required />
+          </div>
 
-  <!-- Task List Table -->
-  <h3>Task List</h3>
-  <table>
-    <thead>
-      <tr>
-        <th>Task</th>
-        <th>Time</th>
-        <th>Ongoing</th>
-        <th>Completed</th>
-      </tr>
-    </thead>
-    <tbody id="taskBody"></tbody>
-  </table>
+          <div class="form-group">
+            <label for="status">Status</label>
+            <select id="status" name="status" required>
+              <option value="pending">Pending</option>
+              <option value="completed">Completed</option>
+            </select>
+          </div>
+        </div>
 
-  <script>
-    const webhookUrl = 'https://jjquintanilla.app.n8n.cloud/webhook/save-task';
+        <div class="form-row">
+          <div class="form-group">
+            <label for="start_time">Start Time</label>
+            <input type="time" id="start_time" name="start_time" required />
+          </div>
 
-    function renderRow({ Task, hh, mm, ampm, status }) {
-      const hourStr = (parseInt(hh) % 12 || 12).toString().padStart(2, '0');
-      const minStr = typeof mm !== 'undefined' ? mm.toString().padStart(2, '0') : '00';
-      const time = `${hourStr}:${minStr} ${ampm}`;
-      return `
-        <tr>
-          <td>${Task}</td>
-          <td>${time}</td>
-          <td><input type="checkbox" ${status === 'ongoing' ? 'checked' : ''} disabled></td>
-          <td><input type="checkbox" ${status === 'completed' ? 'checked' : ''} disabled></td>
-        </tr>
-      `;
-    }
+          <div class="form-group">
+            <label for="end_time">End Time</label>
+            <input type="time" id="end_time" name="end_time" required />
+          </div>
+        </div>
 
-    function fetchAndRenderTasks() {
-      fetch(webhookUrl)
-        .then(response => response.json())
-        .then(data => {
-          const rows = Array.isArray(data)
-            ? data.map(renderRow).join('')
-            : renderRow(data);
-          document.getElementById('taskBody').innerHTML = rows;
-        })
-        .catch(error => console.error('❌ Error fetching tasks:', error));
-    }
+        <div class="form-row">
+          <div class="form-group">
+            <label for="start_date">Start Date</label>
+            <input type="date" id="start_date" name="start_date" required />
+          </div>
 
-    document.getElementById('taskForm').addEventListener('submit', function (e) {
-      e.preventDefault();
+          <div class="form-group">
+            <label for="end_date">End Date</label>
+            <input type="date" id="end_date" name="end_date" required />
+          </div>
+        </div>
 
-      const name = document.getElementById('taskName').value;
-      const time = document.getElementById('taskTime').value;
-      const status = document.getElementById('taskStatus').value;
+        <button type="submit" class="btn">➕ Add Task</button>
+      </form>
+    </section>
 
-      let [hour, minute] = time.split(":").map(Number);
-      let ampm = hour >= 12 ? "PM" : "AM";
-      let paddedHour = hour.toString().padStart(2, '0');
-      let paddedMinute = minute.toString().padStart(2, '0');
+    <section class="card">
+      <h2>📋 Task List</h2>
+      <div class="table-wrapper">
+        <table id="taskTable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Task</th>
+              <th>Status</th>
+              <th>Start Time</th>
+              <th>End Time</th>
+              <th>Start Date</th>
+              <th>End Date</th>
+              <th>Action (✔)</th> <!-- Added this -->
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        
+      </div>
+      
+    </section>
+  </div>
 
-      fetch(webhookUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          task: name,
-          hour: paddedHour,
-          minute: paddedMinute,
-          ampm: ampm,
-          status: status
-        })
-      })
-      .then(response => response.json())
-      .then(() => {
-        const newTask = {
-            Task: name,
-            hh: parseInt(hour),
-            mm: parseInt(minute),
-            ampm: ampm,
-            status: status
-        };
-
-        const newRow = renderRow(newTask);
-        document.getElementById('taskBody').insertAdjacentHTML('beforeend', newRow);
-        })
-
-      .catch(error => console.error('❌ Save error:', error));
-
-      this.reset();
-    });
-
-    // Initial fetch of tasks
-    fetchAndRenderTasks();
-  </script>
+  <script src="main.js"></script>
 </body>
 </html>

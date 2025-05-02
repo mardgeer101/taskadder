@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Task Notification</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 40px;
+      background-color: #f4f4f4;
+    }
+    .box {
+      background-color: white;
+      padding: 20px;
+      border-radius: 10px;
+      max-width: 600px;
+      margin: auto;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    #output {
+      font-size: 1.1rem;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h2>Task Notification</h2>
+    <p id="output">Loading task...</p>
+  </div>
+
+  <script>
+    fetch('http://localhost:5678/webhook-test/save-task')
+        .then(response => response.json())
+        .then(data => {
+            console.log("Webhook response:", data);
+            const sentence = data[0]?.output || "No task message received.";
+            document.getElementById('output').textContent = sentence;
+        })
+        .catch(error => {
+            document.getElementById('output').textContent = 'Failed to load task.';
+            console.error('Error:', error);
+    });
+
+  </script>
+</body>
+</html>
